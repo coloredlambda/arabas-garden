@@ -62,17 +62,21 @@ export const useGardenAnimation = (displayCanvasRef, paintCanvasRef, mode = 'wil
 
         // Determine species and density based on mode
         let speciesList = ['wildflower'];
-        let density = Math.floor(width / 30);
+        const isMobile = width < 768;
+
+        // Base density calculation that ensures a minimum for small screens
+        let baseCount = isMobile ? 15 : Math.floor(width / 30);
+        let density = baseCount;
 
         if (mode === 'sunflower') {
             speciesList = ['sunflower'];
-            density = Math.floor(width / 60);
+            density = isMobile ? 8 : Math.floor(width / 60);
         } else if (mode === 'pothos') {
             speciesList = ['pothos'];
-            density = Math.floor(width / 25); // Increased for lushness
+            density = isMobile ? 20 : Math.floor(width / 25);
         } else if (mode === 'mixed') {
             speciesList = ['wildflower', 'sunflower', 'pothos'];
-            density = Math.floor(width / 35);
+            density = isMobile ? 18 : Math.floor(width / 35);
         }
 
         // Initialize Stems
@@ -89,6 +93,9 @@ export const useGardenAnimation = (displayCanvasRef, paintCanvasRef, mode = 'wil
 
             let y, scale, h;
             let initialAngle = -Math.PI / 2; // Default: upwards
+
+            // Slightly larger base scale on mobile to fill space
+            const baseScale = isMobile ? 0.7 : 0.5;
 
             if (species === 'pothos') {
                 const spawn = Math.random();
@@ -119,15 +126,15 @@ export const useGardenAnimation = (displayCanvasRef, paintCanvasRef, mode = 'wil
                         x = spawn < 0.75 ? -20 : width + 20;
                     }
                 }
-                scale = 0.6 + depth * 0.8;
+                scale = (baseScale + 0.1) + depth * 0.8;
                 h = (height * 0.4) + Math.random() * (height * 0.5);
             } else if (species === 'sunflower') {
                 y = height + 20 + depth * 40;
-                scale = 0.8 + depth * 1.0;
+                scale = (baseScale + 0.3) + depth * 1.0;
                 h = (height * 0.5) + Math.random() * (height * 0.3);
             } else {
                 y = height + 10 + depth * 40;
-                scale = 0.5 + depth * 0.7;
+                scale = baseScale + depth * 0.7;
                 h = (height * 0.2) + Math.random() * (height * 0.5);
             }
 

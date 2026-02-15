@@ -2,7 +2,7 @@ import React from 'react';
 
 import MusicPlayer from './MusicPlayer';
 
-const UILayer = ({ complete, mode }) => {
+const UILayer = ({ complete, mode, onCycleMode }) => {
   const titles = {
     wildflower: "Wildflowers Study No. 1",
     sunflower: "Sunflower Study No. 2",
@@ -43,17 +43,19 @@ const UILayer = ({ complete, mode }) => {
   };
 
   return (
-    <div className="absolute top-[80px] right-[50px] z-[20] flex flex-col items-end text-right max-w-[400px] pointer-events-none">
-      <h1 className="font-normal text-[1.4rem] text-[#3a3228] m-0 mb-[12px] tracking-[0.1em] uppercase opacity-0 animate-[fadeIn_2.5s_0s_forwards_ease-out] border-b border-[#594a3e33] pb-[8px] inline-block">
+    <div className="absolute top-[100px] md:top-[80px] left-0 right-0 md:left-auto md:right-[50px] z-[20] flex flex-col items-center md:items-end text-center md:text-right px-10 md:px-0 max-w-full md:max-w-[400px] pointer-events-none">
+      <h1 className="font-normal text-[1.1rem] md:text-[1.4rem] text-[#3a3228] m-0 mb-[12px] tracking-[0.1em] uppercase opacity-0 animate-[fadeIn_2.5s_0s_forwards_ease-out] border-b border-[#594a3e33] pb-[8px] inline-block">
         {titles[mode]}
       </h1>
       <div 
         id="poemText" 
-        className="text-[1.05rem] italic text-[#594a3e] opacity-0 animate-[fadeIn_3s_1s_forwards_ease-out] leading-[1.7]"
+        className="text-[0.95rem] md:text-[1.05rem] italic text-[#594a3e] opacity-0 animate-[fadeIn_3s_1s_forwards_ease-out] leading-[1.7]"
       >
         {poems[mode]}
       </div>
-      <MusicPlayer />
+      <div className="flex justify-center md:justify-end w-full">
+        <MusicPlayer onCycleMode={onCycleMode} />
+      </div>
     </div>
   );
 };

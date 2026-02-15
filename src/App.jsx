@@ -18,6 +18,13 @@ function App() {
     setKey(prev => prev + 1);
   };
 
+  const modes = ['wildflower', 'sunflower', 'pothos', 'mixed'];
+  const handleCycleMode = () => {
+    const currentIndex = modes.indexOf(mode);
+    const nextIndex = (currentIndex + 1) % modes.length;
+    handleModeChange(modes[nextIndex]);
+  };
+
   return (
     <div className="w-full h-full overflow-hidden bg-[#fbf9f2] font-['Palatino_Linotype',_'Book_Antiqua',_Palatino,_serif]">
       {/* SVG Filters */}
@@ -48,11 +55,11 @@ function App() {
       </div>
 
       {/* Garden Selector UI */}
-      <div className="absolute top-[30px] right-[50px] z-[30] flex gap-4 text-[0.8rem] uppercase tracking-widest text-[#594a3e]">
-        {['wildflower', 'sunflower', 'pothos', 'mixed'].map((m) => (
+      <div className="absolute top-[20px] md:top-[30px] left-0 right-0 md:left-auto md:right-[50px] z-[30] flex flex-wrap justify-center md:justify-end gap-x-4 gap-y-2 px-6 text-[0.7rem] md:text-[0.8rem] uppercase tracking-widest text-[#594a3e]">
+        {modes.map((m) => (
           <button
             key={m}
-            className={`border-b border-transparent transition-all pb-1 ${mode === m ? 'border-[#3a3228] text-[#3a3228]' : 'opacity-60 hover:opacity-100'}`}
+            className={`border-b border-transparent transition-all pb-1 whitespace-nowrap ${mode === m ? 'border-[#3a3228] text-[#3a3228]' : 'opacity-40 md:opacity-60 hover:opacity-100'}`}
             onClick={() => handleModeChange(m)}
           >
             {m === 'wildflower' ? 'Wild Meadow' : m === 'sunflower' ? 'Sunny Patch' : m === 'pothos' ? 'Ivy Wall' : 'Mixed Garden'}
@@ -60,7 +67,7 @@ function App() {
         ))}
         <button 
           onClick={handleRegenerate}
-          className="ml-4 opacity-40 hover:opacity-100 transition-opacity italic"
+          className="ml-0 md:ml-4 opacity-30 md:opacity-40 hover:opacity-100 transition-opacity italic whitespace-nowrap"
         >
           Regenerate
         </button>
@@ -73,7 +80,7 @@ function App() {
         onComplete={() => setComplete(true)} 
       />
       
-      <UILayer complete={complete} mode={mode} />
+      <UILayer complete={complete} mode={mode} onCycleMode={handleCycleMode} />
 
       <style>{`
         @keyframes fadeIn {
