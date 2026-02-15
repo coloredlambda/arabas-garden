@@ -34,26 +34,26 @@ export const useGardenAnimation = (displayCanvasRef, paintCanvasRef, mode = 'wil
         flowersRef.current = [];
         setComplete(false);
 
-        // Initial Ground Wash (not for Pothos only mode)
-        if (mode !== 'pothos') {
-            const groundH = height * 0.15;
-            for (let i = 0; i < 20; i++) {
-                const x = Math.random() * width;
-                const y = height - Math.random() * groundH;
-                const w = 100 + Math.random() * 200;
-                const col = PALETTE.ground[Math.floor(Math.random() * PALETTE.ground.length)];
-                brushRef.current.wash(x, y, w, w * 0.3, col, 0.05);
-            }
-        } else {
-            // Ceiling wash for pothos?
-            const groundH = height * 0.1;
-            for (let i = 0; i < 10; i++) {
-                const x = Math.random() * width;
-                const y = Math.random() * groundH;
-                const w = 150 + Math.random() * 250;
-                const col = PALETTE.ground[Math.floor(Math.random() * PALETTE.ground.length)];
-                brushRef.current.wash(x, y, w, w * 0.2, col, 0.03);
-            }
+        // Protected Zone (Top Right)
+        const protectedZone = {
+            x: width - 450,
+            y: 0,
+            width: 450,
+            height: 450
+        };
+
+        const isInsideProtectedZone = (x, y) => {
+            return x > protectedZone.x && y < protectedZone.height;
+        };
+
+        // Ground Wash
+        const groundH = height * 0.15;
+        for (let i = 0; i < 20; i++) {
+            const x = Math.random() * width;
+            const y = height - Math.random() * groundH;
+            const w = 100 + Math.random() * 200;
+            const col = PALETTE.ground[Math.floor(Math.random() * PALETTE.ground.length)];
+            brushRef.current.wash(x, y, w, w * 0.3, col, 0.05);
         }
 
         // Determine species and density based on mode
@@ -74,13 +74,24 @@ export const useGardenAnimation = (displayCanvasRef, paintCanvasRef, mode = 'wil
         // Initialize Stems
         for (let i = 0; i < density; i++) {
             const species = speciesList[Math.floor(Math.random() * speciesList.length)];
-            const x = Math.random() * width;
+            let x = Math.random() * width;
             const depth = Math.random();
 
             let y, scale, h;
 
             if (species === 'pothos') {
-                y = -20 - depth * 30; // Start from top
+                // Pothos now grows from bottom or sides
+                const side = Math.random();
+                if (side < 0.4) { // Bottom
+                    y = height + 20;
+                    x = Math.random() * width;
+                } else if (side < 0.7) { // Left side
+                    y = Math.random() * height;
+                    x = -20;
+                } else { // Right side
+                    y = Math.random() * height;
+                    x = width + 20;
+                }
                 scale = 0.6 + depth * 0.8;
                 h = (height * 0.4) + Math.random() * (height * 0.5);
             } else if (species === 'sunflower') {
@@ -93,10 +104,22 @@ export const useGardenAnimation = (displayCanvasRef, paintCanvasRef, mode = 'wil
                 h = (height * 0.2) + Math.random() * (height * 0.5);
             }
 
-            stemsRef.current.push(new Stem(x, y, h * scale, scale, species));
+            // Don't start a plant inside the protected zone if it's near the top
+            if (isInsideProtectedZone(x, y)) {
+                continue;
+            }
+
+            const stem = new Stem(x, y, h * scale, scale, species);
+
+            // Filter segments that enter the protected zone
+            stem.segments = stem.segments.filter(seg => !isInsideProtectedZone(seg.x, seg.y));
+            if (stem.segments.length > 0) {
+                stem.tip = stem.segments[stem.segments.length - 1];
+                stemsRef.current.push(stem);
+            }
         }
 
-        // Sort to have larger (closer) ones drawn last
+        // Sort
         stemsRef.current.sort((a, b) => a.scale - b.scale);
 
         const loop = () => {
@@ -107,7 +130,10 @@ export const useGardenAnimation = (displayCanvasRef, paintCanvasRef, mode = 'wil
                 stem.draw(brushRef.current);
                 if (!done) active = true;
                 else if (stem.type === 'flower' && !stem.hasFlower) {
-                    flowersRef.current.push(new Flower(stem.tip.x, stem.tip.y, stem.scale, stem.species));
+                    // Extra check for flower position
+                    if (!isInsideProtectedZone(stem.tip.x, stem.tip.y)) {
+                        flowersRef.current.push(new Flower(stem.tip.x, stem.tip.y, stem.scale, stem.species));
+                    }
                     stem.hasFlower = true;
                 }
             });
@@ -148,7 +174,7 @@ export const useGardenAnimation = (displayCanvasRef, paintCanvasRef, mode = 'wil
             window.removeEventListener('resize', handleResize);
             if (animationIdRef.current) cancelAnimationFrame(animationIdRef.current);
         };
-    }, [mode]); // Re-init when mode changes
+    }, [mode]);
 
     return { complete };
 };

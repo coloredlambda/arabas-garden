@@ -48,7 +48,7 @@ function App() {
       </div>
 
       {/* Garden Selector UI */}
-      <div className="absolute top-[30px] left-[30px] z-[30] flex gap-4 text-[0.8rem] uppercase tracking-widest text-[#594a3e]">
+      <div className="absolute top-[30px] right-[50px] z-[30] flex gap-4 text-[0.8rem] uppercase tracking-widest text-[#594a3e]">
         {['wildflower', 'sunflower', 'pothos', 'mixed'].map((m) => (
           <button
             key={m}

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React from 'react';
 
 const UILayer = ({ complete, mode }) => {
   const titles = {
@@ -40,7 +40,7 @@ const UILayer = ({ complete, mode }) => {
   };
 
   return (
-    <div className="absolute bottom-[40px] right-[50px] z-[20] flex flex-col items-end text-right max-w-[400px] pointer-events-none">
+    <div className="absolute top-[80px] right-[50px] z-[20] flex flex-col items-end text-right max-w-[400px] pointer-events-none">
       <h1 className="font-normal text-[1.4rem] text-[#3a3228] m-0 mb-[12px] tracking-[0.1em] uppercase opacity-0 animate-[fadeIn_2.5s_0s_forwards_ease-out] border-b border-[#594a3e33] pb-[8px] inline-block">
         {titles[mode]}
       </h1>
