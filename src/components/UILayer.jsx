@@ -1,5 +1,7 @@
 import React from 'react';
 
+import MusicPlayer from './MusicPlayer';
+
 const UILayer = ({ complete, mode }) => {
   const titles = {
     wildflower: "Wildflowers Study No. 1",
@@ -19,7 +21,7 @@ const UILayer = ({ complete, mode }) => {
     sunflower: (
       <>
         My favorite flower,<br />
-        Maybe because its the only one I really know,<br />
+        The only one I really know,<br />
         You're my big little sunflower.
       </>
     ),
@@ -34,7 +36,8 @@ const UILayer = ({ complete, mode }) => {
       <>
         I will make you a garden one day,<br />
         For now, it has to be digital,<br />
-        Here for you to imagine.
+        Here for you to imagine.<br />
+        <span style={{ fontStyle: 'italic' }}>I love you, Nana Araba</span>
       </>
     )
   };
@@ -50,6 +53,7 @@ const UILayer = ({ complete, mode }) => {
       >
         {poems[mode]}
       </div>
+      <MusicPlayer />
     </div>
   );
 };
