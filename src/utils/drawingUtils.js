@@ -29,6 +29,13 @@ export const PALETTE = {
         { h: 85, s: 40, l: 45 },  // Lighter green
         { h: 60, s: 30, l: 75 }   // Variegated cream
     ],
+    butterflies: [
+        { main: { h: 25, s: 95, l: 55 }, sec: { h: 0, s: 0, l: 10 } },   // Monarch Orange
+        { main: { h: 190, s: 90, l: 50 }, sec: { h: 210, s: 80, l: 20 } }, // Blue Morpho
+        { main: { h: 280, s: 80, l: 60 }, sec: { h: 300, s: 70, l: 30 } }, // Purple Emperor
+        { main: { h: 50, s: 95, l: 60 }, sec: { h: 40, s: 80, l: 20 } },  // Swallowtail Yellow
+        { main: { h: 330, s: 90, l: 65 }, sec: { h: 350, s: 70, l: 30 } }  // Pink Petal
+    ],
     centers: { h: 45, s: 80, l: 45 },
     leaves: { h: 100, s: 35, l: 42 }
 };
@@ -89,10 +96,47 @@ export class Brush {
         this.ctx.fill();
         this.ctx.restore();
     }
+
+    butterflyWing(x, y, size, angle, side, wingType, color, opacity, flap) {
+        this.ctx.save();
+        this.ctx.translate(x, y);
+        this.ctx.rotate(angle);
+        this.ctx.scale(side === 'right' ? 1 : -1, 1);
+
+        // Flap affects horizontal scale (width as seen from top/front)
+        const flapFactor = Math.cos(flap * Math.PI * 2);
+        const flapWidth = Math.max(0.1, 0.4 + flapFactor * 0.6);
+        this.ctx.scale(flapWidth, 1);
+
+        const passes = 3;
+        for (let i = 0; i < passes; i++) {
+            const jitterX = (Math.random() - 0.5) * 2;
+            const jitterY = (Math.random() - 0.5) * 2;
+            const s = size * (0.9 + Math.random() * 0.2);
+
+            const h = color.h + (Math.random() * 10 - 5);
+            const l = color.l + (Math.random() * 10 - 5);
+            this.ctx.fillStyle = `hsla(${h}, ${color.s}%, ${l}%, ${opacity / passes})`;
+
+            this.ctx.beginPath();
+            this.ctx.moveTo(jitterX, jitterY);
+            if (wingType === 'top') {
+                // Top wing (larger, swept back slightly)
+                this.ctx.bezierCurveTo(jitterX + s * 0.5, jitterY - s * 1.5, jitterX + s * 2.5, jitterY - s * 0.5, jitterX + s * 1.5, jitterY + s * 0.2);
+                this.ctx.bezierCurveTo(jitterX + s * 1.0, jitterY + s * 0.5, jitterX + s * 0.2, jitterY + s * 0.2, jitterX, jitterY);
+            } else {
+                // Bottom wing (smaller, more rounded)
+                this.ctx.bezierCurveTo(jitterX + s * 1.2, jitterY + s * 0.5, jitterX + s * 1.5, jitterY + s * 1.8, jitterX + s * 0.5, jitterY + s * 1.2);
+                this.ctx.bezierCurveTo(jitterX + s * 0.2, jitterY + s * 0.8, jitterX, jitterY + s * 0.2, jitterX, jitterY);
+            }
+            this.ctx.fill();
+        }
+        this.ctx.restore();
+    }
 }
 
 export class Stem {
-    constructor(x, y, height, scale, species = 'wildflower') {
+    constructor(x, y, height, scale, species = 'wildflower', initialAngle = null) {
         this.x = x;
         this.y = y;
         this.scale = scale;
@@ -109,10 +153,13 @@ export class Stem {
         let cx = x;
         let cy = y;
 
-        // Initial angle: Sunflowers are more upright, Meadow flowers vary, Pothos trail
-        let ca = -Math.PI / 2;
-        if (species === 'wildflower') ca += (Math.random() - 0.5) * 0.4;
-        if (species === 'pothos') ca = Math.PI / 2 + (Math.random() - 0.5) * 1.0; // Trail downwards
+        // Initial angle: Fallback to species defaults if initialAngle is not provided
+        let ca = initialAngle;
+        if (ca === null) {
+            ca = -Math.PI / 2;
+            if (species === 'wildflower') ca += (Math.random() - 0.5) * 0.4;
+            if (species === 'pothos') ca = Math.PI / 2 + (Math.random() - 0.5) * 1.0; // Trail downwards
+        }
 
         const stepSize = (species === 'sunflower' ? 10 : 6) * scale;
         const totalSteps = Math.floor(height / stepSize);
@@ -367,5 +414,73 @@ export class Flower {
                 }
             }
         }
+    }
+}
+
+export class Butterfly {
+    constructor(width, height) {
+        this.width = width;
+        this.height = height;
+        this.x = Math.random() * width;
+        this.y = Math.random() * height;
+        this.vx = (Math.random() - 0.5) * 2;
+        this.vy = (Math.random() - 0.5) * 2;
+        this.angle = Math.random() * Math.PI * 2;
+
+        const palette = PALETTE.butterflies[Math.floor(Math.random() * PALETTE.butterflies.length)];
+        this.mainColor = palette.main;
+        this.secColor = palette.sec;
+
+        this.scale = 0.5 + Math.random() * 0.5;
+        this.flap = 0;
+        this.phase = Math.random() * Math.PI * 2;
+    }
+
+    update() {
+        // Wander steering
+        this.angle += (Math.random() - 0.5) * 0.2;
+        const speed = 1.2 + Math.sin(Date.now() * 0.001 + this.phase) * 0.8;
+        this.vx = Math.cos(this.angle) * speed;
+        this.vy = Math.sin(this.angle) * speed;
+
+        this.x += this.vx;
+        this.y += this.vy;
+
+        // Wrap around with margin
+        const margin = 50;
+        if (this.x < -margin) this.x = this.width + margin;
+        if (this.x > this.width + margin) this.x = -margin;
+        if (this.y < -margin) this.y = this.height + margin;
+        if (this.y > this.height + margin) this.y = -margin;
+
+        this.flap = Math.sin(Date.now() * 0.02 + this.phase);
+        return false; // Still active
+    }
+
+    draw(brush) {
+        const wingSize = 12 * this.scale;
+        const flapPhase = (Date.now() * 0.01 + this.phase) % (Math.PI * 2);
+
+        // Draw wings
+        // Right side
+        brush.butterflyWing(this.x, this.y, wingSize, this.angle, 'right', 'top', this.mainColor, 0.6, flapPhase);
+        brush.butterflyWing(this.x, this.y, wingSize * 0.7, this.angle, 'right', 'bottom', this.secColor, 0.5, flapPhase);
+
+        // Left side
+        brush.butterflyWing(this.x, this.y, wingSize, this.angle, 'left', 'top', this.mainColor, 0.6, flapPhase);
+        brush.butterflyWing(this.x, this.y, wingSize * 0.7, this.angle, 'left', 'bottom', this.secColor, 0.5, flapPhase);
+
+        // Body (head + thorax + abdomen)
+        const bodyCol = { h: 0, s: 0, l: 15 };
+        // Thorax
+        brush.blob(this.x, this.y, 2 * this.scale, bodyCol, 0.3, this.angle, 1.2);
+        // Head
+        const hx = this.x + Math.cos(this.angle) * 3 * this.scale;
+        const hy = this.y + Math.sin(this.angle) * 3 * this.scale;
+        brush.blob(hx, hy, 1.5 * this.scale, bodyCol, 0.3, this.angle, 1);
+        // Abdomen
+        const ax = this.x - Math.cos(this.angle) * 4 * this.scale;
+        const ay = this.y - Math.sin(this.angle) * 4 * this.scale;
+        brush.blob(ax, ay, 1.8 * this.scale, bodyCol, 0.3, this.angle, 2.5);
     }
 }

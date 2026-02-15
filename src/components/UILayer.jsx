@@ -2,39 +2,39 @@ import React from 'react';
 
 const UILayer = ({ complete, mode }) => {
   const titles = {
-    wildflower: "Meadow Study No. 4",
+    wildflower: "Wildflowers Study No. 1",
     sunflower: "Sunflower Study No. 2",
-    pothos: "Foliage Study No. 1",
-    mixed: "Garden Study No. 7"
+    pothos: "Pothos Ivy Study No. 3",
+    mixed: "Garden Study No. 4"
   };
 
   const poems = {
     wildflower: (
       <>
-        The earth laughs in flowers,<br />
-        A wild, chaotic chorus of color<br />
-        Singing to the open sky.
+        I love their randomness,<br />
+        They can be anything,<br />
+        You and I too, could be, anything...
       </>
     ),
     sunflower: (
       <>
-        Heads held high to catch the light,<br />
-        Gilded giants in the sun's embrace,<br />
-        Watching the day turn into gold.
+        My favorite flower,<br />
+        Maybe because its the only one I really know,<br />
+        You're my big little sunflower.
       </>
     ),
     pothos: (
       <>
-        Green cascades of heart-shaped dreams,<br />
-        Climbing silence, trailing time,<br />
-        Life in a quiet, verdant rhythm.
+        You made me fall in love with pothos,<br />
+        Their clinginess, climbing upwards and towards the light,<br />
+        We should learn from them.
       </>
     ),
     mixed: (
       <>
-        A tapestry of wild and domestic,<br />
-        Beauty found in the tangled mess,<br />
-        Nature's diverse and breathing art.
+        I will make you a garden one day,<br />
+        For now, it has to be digital,<br />
+        Here for you to imagine.
       </>
     )
   };
@@ -46,7 +46,7 @@ const UILayer = ({ complete, mode }) => {
       </h1>
       <div 
         id="poemText" 
-        className={`text-[1.05rem] italic text-[#594a3e] transition-opacity duration-[2000ms] ease-out leading-[1.7] ${complete ? 'opacity-[0.85]' : 'opacity-0'}`}
+        className="text-[1.05rem] italic text-[#594a3e] opacity-0 animate-[fadeIn_3s_1s_forwards_ease-out] leading-[1.7]"
       >
         {poems[mode]}
       </div>

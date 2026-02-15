@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
-import { Brush, Stem, Flower, PALETTE } from '../utils/drawingUtils';
+import { Brush, Stem, Flower, Butterfly, PALETTE } from '../utils/drawingUtils';
 
 const COMPOSITE_FILTER = 'url(#watercolor) blur(0.3px)';
 
@@ -8,7 +8,9 @@ export const useGardenAnimation = (displayCanvasRef, paintCanvasRef, mode = 'wil
     const animationIdRef = useRef(null);
     const stemsRef = useRef([]);
     const flowersRef = useRef([]);
+    const butterfliesRef = useRef([]);
     const brushRef = useRef(null);
+    const butterflyBrushRef = useRef(null);
 
     const init = () => {
         if (!displayCanvasRef.current || !paintCanvasRef.current) return;
@@ -30,8 +32,10 @@ export const useGardenAnimation = (displayCanvasRef, paintCanvasRef, mode = 'wil
 
         paintCtx.clearRect(0, 0, width, height);
         brushRef.current = new Brush(paintCtx);
+        butterflyBrushRef.current = new Brush(displayCtx);
         stemsRef.current = [];
         flowersRef.current = [];
+        butterfliesRef.current = [];
         setComplete(false);
 
         // Protected Zone (Top Right)
@@ -65,7 +69,7 @@ export const useGardenAnimation = (displayCanvasRef, paintCanvasRef, mode = 'wil
             density = Math.floor(width / 60);
         } else if (mode === 'pothos') {
             speciesList = ['pothos'];
-            density = Math.floor(width / 40);
+            density = Math.floor(width / 25); // Increased for lushness
         } else if (mode === 'mixed') {
             speciesList = ['wildflower', 'sunflower', 'pothos'];
             density = Math.floor(width / 35);
@@ -74,23 +78,46 @@ export const useGardenAnimation = (displayCanvasRef, paintCanvasRef, mode = 'wil
         // Initialize Stems
         for (let i = 0; i < density; i++) {
             const species = speciesList[Math.floor(Math.random() * speciesList.length)];
+
+            // For mixed mode, reduce pothos frequency
+            if (mode === 'mixed' && species === 'pothos' && Math.random() < 0.5) {
+                continue;
+            }
+
             let x = Math.random() * width;
             const depth = Math.random();
 
             let y, scale, h;
+            let initialAngle = -Math.PI / 2; // Default: upwards
 
             if (species === 'pothos') {
-                // Pothos now grows from bottom or sides
-                const side = Math.random();
-                if (side < 0.4) { // Bottom
-                    y = height + 20;
-                    x = Math.random() * width;
-                } else if (side < 0.7) { // Left side
-                    y = Math.random() * height;
-                    x = -20;
-                } else { // Right side
-                    y = Math.random() * height;
-                    x = width + 20;
+                const spawn = Math.random();
+                if (mode === 'pothos') {
+                    // Pothos mode: grow from bottom, sides, center, or TOP
+                    if (spawn < 0.25) { // Bottom
+                        y = height + 20;
+                        x = Math.random() * width;
+                    } else if (spawn < 0.5) { // Left/Right edges
+                        y = Math.random() * height;
+                        x = spawn < 0.37 ? -20 : width + 20;
+                    } else if (spawn < 0.75) { // Top
+                        y = -20;
+                        x = Math.random() * width;
+                        initialAngle = Math.PI / 2; // Grow downwards
+                    } else { // Center ground/random points
+                        y = Math.random() * height;
+                        x = (width * 0.1) + Math.random() * (width * 0.8);
+                        initialAngle = (Math.random() - 0.5) * Math.PI * 2; // Random direction
+                    }
+                } else {
+                    // Mixed mode: keep to edges (bottom or sides)
+                    if (spawn < 0.45) { // Bottom
+                        y = height + 20;
+                        x = Math.random() * width;
+                    } else { // Sides
+                        y = Math.random() * height;
+                        x = spawn < 0.75 ? -20 : width + 20;
+                    }
                 }
                 scale = 0.6 + depth * 0.8;
                 h = (height * 0.4) + Math.random() * (height * 0.5);
@@ -109,7 +136,7 @@ export const useGardenAnimation = (displayCanvasRef, paintCanvasRef, mode = 'wil
                 continue;
             }
 
-            const stem = new Stem(x, y, h * scale, scale, species);
+            const stem = new Stem(x, y, h * scale, scale, species, initialAngle);
 
             // Filter segments that enter the protected zone
             stem.segments = stem.segments.filter(seg => !isInsideProtectedZone(seg.x, seg.y));
@@ -117,6 +144,12 @@ export const useGardenAnimation = (displayCanvasRef, paintCanvasRef, mode = 'wil
                 stem.tip = stem.segments[stem.segments.length - 1];
                 stemsRef.current.push(stem);
             }
+        }
+
+        // Initialize Butterflies
+        const butterflyCount = 5 + Math.floor(Math.random() * 5);
+        for (let i = 0; i < butterflyCount; i++) {
+            butterfliesRef.current.push(new Butterfly(width, height));
         }
 
         // Sort
@@ -147,6 +180,14 @@ export const useGardenAnimation = (displayCanvasRef, paintCanvasRef, mode = 'wil
             displayCtx.clearRect(0, 0, width, height);
             displayCtx.filter = COMPOSITE_FILTER;
             displayCtx.drawImage(paintCanvas, 0, 0);
+
+            // Butterflies are always active and drawn on displayCtx (no trails)
+            butterfliesRef.current.forEach(butterfly => {
+                butterfly.update();
+                butterfly.draw(butterflyBrushRef.current);
+                active = true;
+            });
+
             displayCtx.filter = 'none';
 
             if (active) {
