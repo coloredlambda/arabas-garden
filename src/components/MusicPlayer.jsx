@@ -12,8 +12,27 @@ const MusicPlayer = () => {
         await audioRef.current.play();
         setIsPlaying(true);
       } catch (err) {
-        console.log("Autoplay was prevented:", err);
-        setIsPlaying(false);
+        console.log("Autoplay was prevented, waiting for interaction");
+        
+        // Add one-time listener for any user interaction to start the music
+        const startOnInteraction = async () => {
+          try {
+            await audioRef.current.play();
+            setIsPlaying(true);
+            window.removeEventListener('click', startOnInteraction);
+            window.removeEventListener('touchstart', startOnInteraction);
+          } catch (e) {
+            console.error("Interaction play failed", e);
+          }
+        };
+
+        window.addEventListener('click', startOnInteraction);
+        window.addEventListener('touchstart', startOnInteraction);
+        
+        return () => {
+          window.removeEventListener('click', startOnInteraction);
+          window.removeEventListener('touchstart', startOnInteraction);
+        };
       }
     };
     attemptPlay();
